@@ -37,10 +37,10 @@ def call (Map configMap){
                         withAWS(region:'us-east-1',credentials:'aws-creds') {
                             sh """
                                 set -e
-                                aws eks update-kubeconfig --region ${REGION} --name ${PROJECT}-${deploy_to}
+                                aws eks update-kubeconfig --region ${REGION} --name stackly-${deploy_to}
                                 kubectl get nodes
                                 sed -i "s/IMAGE_VERSION/${appVersion}/g" values.yaml
-                                helm upgrade --install ${COMPONENT} -f values-${deploy_to}.yaml -n ${PROJECT} --atomic --wait --timeout=5m .
+                                helm upgrade --install ${COMPONENT} -f values-${deploy_to}.yaml -n roboshop --atomic --wait --timeout=5m .
                                 #kubectl apply -f ${COMPONENT}-${deploy_to}.yaml
                             """
                         }
