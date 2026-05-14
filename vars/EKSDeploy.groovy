@@ -7,9 +7,9 @@ def call (Map configMap){
             }
         }
         environment {
-            COURSE = "Jenkins"
+            TASK = "Jenkins"
             appVersion = configMap.get("appVersion")
-            ACC_ID = "160885265516"
+            ACC_ID = "348165962265"
             PROJECT = configMap.get("project")
             COMPONENT = configMap.get("component")
             deploy_to = configMap.get("deploy_to")
@@ -19,16 +19,18 @@ def call (Map configMap){
             timeout(time: 30, unit: 'MINUTES') 
             disableConcurrentBuilds()
         }
+
         /* parameters {
             string(name: 'appVersion', description: 'Which app version you want to deploy')
             choice(name: 'deploy_to', choices: ['dev', 'qa', 'prod'], description: 'Pick something')
         } */
+
         // This is build section
         stages {
-            
+
             stage('Deploy') {
                 when{
-                    expression { deploy_to == "dev" || deploy_to = "qa" || deploy_to = "qa" }
+                    expression { deploy_to == "dev" || deploy_to == "qa" || deploy_to == "prod" }
                 }
                 steps {
                     script{
@@ -45,6 +47,7 @@ def call (Map configMap){
                     }
                 }
             }
+
             stage('Functional Testing'){
                 when{
                     expression { deploy_to == "dev" }
@@ -57,6 +60,7 @@ def call (Map configMap){
                     }
                 }
             }
+
             stage('Integration Testing'){
                 when{
                     expression { deploy_to == "qa" }
@@ -69,6 +73,7 @@ def call (Map configMap){
                     }
                 }
             }
+
             stage('E2E Testing'){
                 when{
                     expression { deploy_to == "uat" }
@@ -81,6 +86,7 @@ def call (Map configMap){
                     }
                 }
             }
+
             stage('PROD Process'){
                 when{
                     expression { deploy_to == "prod" }
@@ -94,68 +100,69 @@ def call (Map configMap){
                     }
                 }
             }
-            
-        }
 
-            
+        }
 
         post{
             always{
                 echo 'I will always say Hello again!'
                 cleanWs()
             }
+
             success {
                 script {
-                    withCredentials([string(credentialsId: 'slack-token', variable: 'SLACK_WEBHOOK')]) {
+                    // withCredentials([string(credentialsId: 'slack-token', variable: 'SLACK_WEBHOOK')]) {
 
-                        def payload = """
-                        {
-                        "attachments": [
-                            {
-                            "color": "#2eb886",
-                            "title": "✅ Jenkins Build Successful",
-                            "fields": [
-                                {
-                                "title": "Job Name",
-                                "value": "${env.JOB_NAME}",
-                                "short": true
-                                },
-                                {
-                                "title": "Build Number",
-                                "value": "${env.BUILD_NUMBER}",
-                                "short": true
-                                },
-                                {
-                                "title": "Status",
-                                "value": "SUCCESS",
-                                "short": true
-                                },
-                                {
-                                "title": "Build URL",
-                                "value": "${env.BUILD_URL}",
-                                "short": false
-                                }
-                            ],
-                            "footer": "Jenkins CI",
-                            "ts": ${System.currentTimeMillis() / 1000}
-                            }
-                        ]
-                        }
-                        """
+                    //     def payload = """
+                    //     {
+                    //     "attachments": [
+                    //         {
+                    //         "color": "#2eb886",
+                    //         "title": "✅ Jenkins Build Successful",
+                    //         "fields": [
+                    //             {
+                    //             "title": "Job Name",
+                    //             "value": "${env.JOB_NAME}",
+                    //             "short": true
+                    //             },
+                    //             {
+                    //             "title": "Build Number",
+                    //             "value": "${env.BUILD_NUMBER}",
+                    //             "short": true
+                    //             },
+                    //             {
+                    //             "title": "Status",
+                    //             "value": "SUCCESS",
+                    //             "short": true
+                    //             },
+                    //             {
+                    //             "title": "Build URL",
+                    //             "value": "${env.BUILD_URL}",
+                    //             "short": false
+                    //             }
+                    //         ],
+                    //         "footer": "Jenkins CI",
+                    //         "ts": ${System.currentTimeMillis() / 1000}
+                    //         }
+                    //     ]
+                    //     }
+                    //     """
 
-                        sh """
-                        curl -X POST \
-                        -H 'Content-type: application/json' \
-                        --data '${payload}' \
-                        ${SLACK_WEBHOOK}
-                        """
-                    }
+                    //     sh """
+                    //     curl -X POST \
+                    //     -H 'Content-type: application/json' \
+                    //     --data '${payload}' \
+                    //     ${SLACK_WEBHOOK}
+                    //     """
+
+                    echo "Build was successful! Sending notification to Slack..."
                 }
             }
-        
+
             failure {
                 echo 'I will run if failure'
             }
+
             aborted {
                 echo 'pipeline is aborted'
             }
